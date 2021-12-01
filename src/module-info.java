@@ -1,0 +1,2 @@
+module magenicmasters_info {
+}
