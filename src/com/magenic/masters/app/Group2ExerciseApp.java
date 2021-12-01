@@ -1,20 +1,22 @@
 package com.magenic.masters.app;
 
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
+import java.util.function.BiFunction;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import com.magenic.masters.object.CartItem;
 import com.magenic.masters.object.Stock;
 
 public class Group2ExerciseApp {
-	private static List<Stock> cart = new ArrayList<>();
 	private static List<Stock> stock = new ArrayList<>();
+	private static List<CartItem> cartItems = new ArrayList<>();
 
 	public static void main(String[] args) throws IOException {
 
@@ -87,35 +89,43 @@ public class Group2ExerciseApp {
 			Stock selected = categorizedItems.get(stock);
 			System.out.print("Please enter quantity:");
 			Double quantity = scanner.nextDouble();
-			BigDecimal totalPrice = BigDecimal.valueOf(quantity).multiply(selected.getPrice());
+			Double totalPrice = selected.getPrice() * quantity;
 			String itemAddedDisplay = """
 					Item Added : %s | %.2f / %s x %.1f | %.2f
 					""";
 
 			System.out.print(itemAddedDisplay.formatted(selected.getProductName(), selected.getPrice(),
 					selected.getQuantityType(), quantity, totalPrice));
-			cart.add(selected); // add items to  cart here..
+			adduToCartu(selected, quantity);// add items to cart here..
 			printCurrentItems();
 			waitForStockInput(categorizedItems, scanner);
 		}
 	}
 
+	private static void adduToCartu(Stock item, Double quantity) {
+		var itemQty = switch (item.getQuantityType()) {
+		case "kg" -> 1;
+		default -> quantity;
+		};
+		CartItem cartItem = new CartItem();
+		var totalPrice = quantity * item.getPrice();
+		cartItem.setStockItem(item);
+		cartItem.setQuantity(itemQty);
+		cartItem.setInputQuantity(quantity);
+		cartItem.setTotalPrice(totalPrice);
+		cartItems.add(cartItem);
+	}
+
 	private static void printCurrentItems() {
 		// TODO: dummy print, need teeing collector here..
-		String currentItems = """
-				Current cart contents:
-				Total amount : %.2f
-				Total amount compact : %s
-				Number of items : %s
-				""";
-		System.out.println(currentItems.formatted(11000.0, "11.000 K", "12"));
+		
 	}
 
 	private static Stock mapToObject(String str) {
 		String[] split = str.split(",");
 		Stock stock = new Stock();
 		stock.setProductName(split[0]);
-		stock.setPrice(BigDecimal.valueOf(Double.valueOf(split[1])));
+		stock.setPrice(Double.valueOf(split[1]));
 		stock.setQuantityType(split[2]);
 		stock.setCategory(split[3]);
 		return stock;

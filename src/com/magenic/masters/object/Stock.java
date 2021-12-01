@@ -5,7 +5,7 @@ import java.math.BigDecimal;
 public class Stock {
 	private Integer index;
 	private String productName;
-	private BigDecimal price;
+	private Double price;
 	private String quantityType;
 	private String category;
 
@@ -25,11 +25,11 @@ public class Stock {
 		this.productName = productName;
 	}
 
-	public BigDecimal getPrice() {
+	public Double getPrice() {
 		return price;
 	}
 
-	public void setPrice(BigDecimal price) {
+	public void setPrice(Double price) {
 		this.price = price;
 	}
 
