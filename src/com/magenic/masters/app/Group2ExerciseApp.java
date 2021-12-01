@@ -35,7 +35,7 @@ public class Group2ExerciseApp {
 		if (category.equals("EXIT")) {
 			return;
 		} else if (category.equals("CHECKOUT")) {
-			checkoutMenu();
+			checkoutMenu(scanner);
 		} else {
 			categorizedItemsMenu(category, scanner);
 		}
@@ -94,7 +94,7 @@ public class Group2ExerciseApp {
 
 			System.out.print(itemAddedDisplay.formatted(selected.getProductName(), selected.getPrice(),
 					selected.getQuantityType(), quantity, totalPrice));
-			cart.add(selected);
+			cart.add(selected); // add items to  cart here..
 			printCurrentItems();
 			waitForStockInput(categorizedItems, scanner);
 		}
@@ -148,8 +148,8 @@ public class Group2ExerciseApp {
 		};
 		return category;
 	}
-	
-	private static void checkoutMenu() {
+
+	private static void checkoutMenu(Scanner scanner) {
 		System.out.println("Payment Method.");
 		// TODO : payment method, details, write to file.
 
