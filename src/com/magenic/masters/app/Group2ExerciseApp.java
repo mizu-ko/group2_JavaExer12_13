@@ -160,9 +160,87 @@ public class Group2ExerciseApp {
 	}
 
 	private static void checkoutMenu(Scanner scanner) {
-		System.out.println("Payment Method.");
-		// TODO : payment method, details, write to file.
+		System.out.println("Current cart contents: ");
+		printCurrentItems();
+		printPaymentMethod();
+		String paymentMethod = waitForPaymentMethodInput(scanner);
 
+
+		if (paymentMethod.equals("SAVINGS")) {
+			System.out.println("SAVINGS");
+		} else if (paymentMethod.equals("CHECKING")) {
+			System.out.println("CHECKING");
+
+		}else if (paymentMethod.equals("CREDIT")) {
+			System.out.println("CREDIT");
+
+		}else if (paymentMethod.equals("GCASH")) {
+			System.out.println("GCASH");
+
+		} else {
+			categorizedItemsMenu(paymentMethod, scanner);
+		}
+		// TODO : payment method, details, write to file.
 	}
 
+	private static void printPaymentMethod() {
+		String paymentMethods = """
+				Payment Method:
+				  1 - Savings
+				  2 - Checking
+				  3 - Credit Card
+				  4 - Gcash
+
+				Choose Payment Method:""";
+		System.out.print(paymentMethods);
+	}
+
+	private static String waitForPaymentMethodInput(Scanner scanner) {
+		Integer paymentInt = scanner.nextInt();
+		System.out.println("\nThank you for your payment.");
+		if (paymentInt.equals(1) || paymentInt.equals(2)) {
+			String savings = """
+					Account Name: Mau Tuazon
+					Account Number: 005412345678
+					Bank name: BDO
+					Total amount due:
+					Total amount:
+					Total amount compact: 
+					Number of Items: 
+					""";
+			System.out.println(savings);
+			return "SAVINGS";
+		} else if (paymentInt.equals(3)) {
+			String credit = """
+					Name on card: Mau Tuazon
+        			Credit card number: 4028123456789012
+        			Expiry date: 12/2022
+        			Total amount due:
+        			Total amount:
+        			Total amount compact:
+        			Number of items:
+        			""";
+			System.out.println(credit);
+			return "CREDIT";
+		}else if (paymentInt.equals(4)) {
+			String gcash = """
+   					Subscriber name: Mau Tuazon
+   					Mobile number: 09171234567
+   					Total amount due:
+   					Total amount:
+   					Total amount compact:
+   					Number of items:
+					""";
+			System.out.println(gcash);
+			return "GCASH";
+		} else {
+			String paymentMethod = getCategory(paymentInt);
+			if (paymentMethod.equals("N/A")) {
+				System.out.print("Please input valid category:");
+				return waitForPaymentMethodInput(scanner);
+			} else {
+				return getCategory(paymentInt);
+			}
+		}
+	}
 }
