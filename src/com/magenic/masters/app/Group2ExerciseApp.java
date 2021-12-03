@@ -3,6 +3,7 @@ package com.magenic.masters.app;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -25,27 +26,31 @@ public class Group2ExerciseApp {
 		stock = rawData.lines().filter(Predicate.not(String::isBlank)).map(a -> mapToObject(a))
 				.collect(Collectors.toList());
 
-//
-//		Integer categoryInt = scanner.nextInt();
 		categoryMenu(scanner);
+		scanner.close();
 	}
 
 	private static void categoryMenu(Scanner scanner) {
 		printCategory();
 		String category = waitForCategoryInput(scanner);
-		System.out.println(category);
 		if (category.equals("EXIT")) {
-			return;
+			System.out.println("Thank you.");
+			return;// to stop recursion
 		} else if (category.equals("CHECKOUT")) {
-			checkoutMenu(scanner);
+			if(cartItems.isEmpty()) {
+				System.out.println("Cart is empty, nothing to checkout.\n");
+				categoryMenu(scanner);
+			} else {
+				checkoutMenu(scanner);
+			}
 		} else {
+			System.out.println(category + " Items");
 			categorizedItemsMenu(category, scanner);
 		}
 	}
 
 	private static String waitForCategoryInput(Scanner scanner) {
 		Integer categInt = scanner.nextInt();
-		System.out.println("Selected is " + categInt);
 		if (categInt.equals(-1)) {
 			// go to checkout
 			return "CHECKOUT";
@@ -62,43 +67,48 @@ public class Group2ExerciseApp {
 		}
 	}
 
-	private static void waitForStockInput(List<Stock> categorizedItems, Scanner scanner) {
+	private static void waitForStockInput(List<Stock> categorizedItems, Scanner scanner, boolean firstTraversal) {
 		Integer n = 0;
 		List<String> stockDisplays = new ArrayList<>();
-		for (Stock item : categorizedItems) {
-			item.setIndex(n);
-			n++;
+		if(firstTraversal) {
+			for (Stock item : categorizedItems) {
+				item.setIndex(n);
+				n++;
 
-			String stockDisplay = """
-					[%d] %s        price: %.2f / %s""";
-			String formatted = stockDisplay.formatted(item.getIndex(), item.getProductName(), item.getPrice(),
-					item.getQuantityType());
-			stockDisplays.add(formatted);
+				String stockDisplay = """
+						[%d] %-40s price: %.2f / %s\n""";
+				String formatted = stockDisplay.formatted(item.getIndex(), item.getProductName(), item.getPrice(),
+						item.getQuantityType());
+				stockDisplays.add(formatted);
+			}
 		}
-		stockDisplays.forEach(System.out::println);
-		System.out.print("Choose item (-1 to go back to Categories):");
+		stockDisplays.forEach(System.out::printf);
+		System.out.print("\nChoose item (-1 to go back to Categories):");
 		Integer stock = scanner.nextInt();
 		if (stock.equals(-1)) {
-			System.out.print("Navigating to categories..");
+			System.out.println("Navigating to categories..");
 			categoryMenu(scanner);
 
 		} else if (stock > categorizedItems.size() - 1) {
 			System.out.println("==========\nPlease enter valid item number\n\n");
-			waitForStockInput(categorizedItems, scanner);
+			waitForStockInput(categorizedItems, scanner, false);
 		} else {
 			Stock selected = categorizedItems.get(stock);
-			System.out.print("Please enter quantity:");
+			switch(selected.getQuantityType()) {
+			case "kg"-> System.out.print("Enter how much (in kg):");
+			default -> System.out.print("Enter how many:");
+			}
 			Double quantity = scanner.nextDouble();
 			Double totalPrice = selected.getPrice() * quantity;
 			String itemAddedDisplay = """
 					Item Added : %s | %.2f / %s x %.1f | %.2f
 					""";
 
-			System.out.print(itemAddedDisplay.formatted(selected.getProductName(), selected.getPrice(),
+			System.out.print("\n" + itemAddedDisplay.formatted(selected.getProductName(), selected.getPrice(),
 					selected.getQuantityType(), quantity, totalPrice));
 			adduToCartu(selected, quantity);// add items to cart here..
-			printCurrentItems();
-			waitForStockInput(categorizedItems, scanner);
+			printCurrentItems(false);
+			waitForStockInput(categorizedItems, scanner, false);
 		}
 	}
 
@@ -116,9 +126,41 @@ public class Group2ExerciseApp {
 		cartItems.add(cartItem);
 	}
 
-	private static void printCurrentItems() {
-		// TODO: dummy print, need teeing collector here..
-		
+	private static void printCurrentItems(boolean isCheckout) {
+		if(!isCheckout) {
+			System.out.println(parseTotalCartItems());
+		}
+		for (CartItem cartItem : cartItems) {
+			Stock selected = cartItem.getStockItem();
+
+			String itemAddedDisplay = """
+					%s | %.2f / %s x %.1f | %.2f
+					""";
+
+			System.out.print(itemAddedDisplay.formatted(selected.getProductName(), selected.getPrice(),
+					selected.getQuantityType(), cartItem.getInputQuantity(), cartItem.getTotalPrice()));
+		}
+		System.out.println();
+
+	}
+
+	private static String parseTotalCartItems() {
+		BiFunction<Double, Double, String> formatToString = (a, b) -> {
+			String message;
+			message = """
+					Total amount: %.2f
+					Total amount compact: %s
+					Number of Items: %.0f
+					""";
+			NumberFormat fmt = NumberFormat.getCompactNumberInstance();
+			fmt.setMinimumFractionDigits(3);
+			return message.formatted(a, fmt.format(a), b);
+		};
+		String totalCartItems = cartItems.stream()
+				.collect(Collectors.teeing(Collectors.summingDouble(CartItem::getTotalPrice),
+						Collectors.summingDouble(CartItem::getQuantity), (a, b) -> formatToString.apply(a, b)));
+
+		return totalCartItems;
 	}
 
 	private static Stock mapToObject(String str) {
@@ -134,7 +176,7 @@ public class Group2ExerciseApp {
 	private static void categorizedItemsMenu(String category, Scanner scanner) {
 		Predicate<Stock> filterByCategory = (s) -> s.getCategory().equals(category);
 		List<Stock> filtered = stock.stream().filter(filterByCategory).collect(Collectors.toList());
-		waitForStockInput(filtered, scanner);
+		waitForStockInput(filtered, scanner, true);
 
 	}
 
@@ -161,25 +203,10 @@ public class Group2ExerciseApp {
 
 	private static void checkoutMenu(Scanner scanner) {
 		System.out.println("Current cart contents: ");
-		printCurrentItems();
+		printCurrentItems(true);
 		printPaymentMethod();
-		String paymentMethod = waitForPaymentMethodInput(scanner);
-
-
-		if (paymentMethod.equals("SAVINGS")) {
-			System.out.println("SAVINGS");
-		} else if (paymentMethod.equals("CHECKING")) {
-			System.out.println("CHECKING");
-
-		}else if (paymentMethod.equals("CREDIT")) {
-			System.out.println("CREDIT");
-
-		}else if (paymentMethod.equals("GCASH")) {
-			System.out.println("GCASH");
-
-		} else {
-			categorizedItemsMenu(paymentMethod, scanner);
-		}
+		waitForPaymentMethodInput(scanner);
+			
 		// TODO : payment method, details, write to file.
 	}
 
@@ -195,51 +222,59 @@ public class Group2ExerciseApp {
 		System.out.print(paymentMethods);
 	}
 
-	private static String waitForPaymentMethodInput(Scanner scanner) {
-		Integer paymentInt = scanner.nextInt();
-		System.out.println("\nThank you for your payment.");
-		if (paymentInt.equals(1) || paymentInt.equals(2)) {
-			String savings = """
+	private static String getReceiptHeader(Integer input) {
+		String receiptHeader = switch (input) {
+		case 1, 2 -> {
+			yield """
 					Account Name: Mau Tuazon
 					Account Number: 005412345678
 					Bank name: BDO
 					Total amount due:
-					Total amount:
-					Total amount compact: 
-					Number of Items: 
 					""";
-			System.out.println(savings);
-			return "SAVINGS";
-		} else if (paymentInt.equals(3)) {
-			String credit = """
+		}
+		case 3 -> {
+			yield """
 					Name on card: Mau Tuazon
-        			Credit card number: 4028123456789012
-        			Expiry date: 12/2022
-        			Total amount due:
-        			Total amount:
-        			Total amount compact:
-        			Number of items:
-        			""";
-			System.out.println(credit);
-			return "CREDIT";
-		}else if (paymentInt.equals(4)) {
-			String gcash = """
-   					Subscriber name: Mau Tuazon
-   					Mobile number: 09171234567
-   					Total amount due:
-   					Total amount:
-   					Total amount compact:
-   					Number of items:
+					Credit card number: 4028123456789012
+					Expiry date: 12/2022
+					Total amount due:
+								""";
+		}
+		case 4 -> {
+			yield """
+					Subscriber name: Mau Tuazon
+					Mobile number: 09171234567
+					Total amount due:
 					""";
-			System.out.println(gcash);
-			return "GCASH";
+		}
+		default -> {
+			yield "N/A";
+		}
+		};
+		return receiptHeader;
+	}
+
+	private static void waitForPaymentMethodInput(Scanner scanner) {
+		Integer paymentInt = scanner.nextInt();
+		String paymentType = switch (paymentInt) {
+		case 1, 2 -> "bank";
+		case 3 -> "cc";
+		case 4 -> "gcash";
+		default -> "N/A";
+		};
+		if (paymentType.equals("N/A")) {
+			waitForPaymentMethodInput(scanner);
 		} else {
-			String paymentMethod = getCategory(paymentInt);
-			if (paymentMethod.equals("N/A")) {
-				System.out.print("Please input valid category:");
-				return waitForPaymentMethodInput(scanner);
-			} else {
-				return getCategory(paymentInt);
+			String receiptHeader = getReceiptHeader(paymentInt);
+			String append = parseTotalCartItems();
+			receiptHeader += append;
+			try {
+				// TODO : refactor to different type of receipt.?
+				Files.writeString(Path.of("output/receipt.txt"), receiptHeader, StandardOpenOption.CREATE);
+				System.out.println("Thank you for your payment.");
+				System.out.println(receiptHeader);
+			} catch (IOException e) {
+				e.printStackTrace();
 			}
 		}
 	}
