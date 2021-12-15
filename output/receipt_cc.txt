@@ -1,7 +1,9 @@
-Name on card: Mau Tuazon
-Credit card number: 4028123456789012
-Expiry date: 12/2022
-Total amount due:
-Total amount: 2252.50
-Total amount compact: 2.252K
-Number of Items: 17
+Account nickname : mau credit card
+Name on Card: Mau Tuazon
+Credit Card number: 4344548954
+Account Type: Credit Card
+Expiry Date: 02/2023
+
+Total amount: 63.00
+Total amount compact: 63
+Number of Items: 1

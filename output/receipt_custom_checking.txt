@@ -1,0 +1,9 @@
+Account nickname : NA
+Account Name: Custom Checking
+Account Number: 238343554543
+Account Type: Checking
+Bank name: BDO
+
+Total amount: 63.00
+Total amount compact: 63
+Number of Items: 1

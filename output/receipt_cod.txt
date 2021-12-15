@@ -1,0 +1,4 @@
+COD
+Total amount: 63.00
+Total amount compact: 63
+Number of Items: 1

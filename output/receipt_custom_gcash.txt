@@ -1,6 +1,6 @@
-Account nickname: mau gcash
-Subscriber name: John Doe
-Mobile Number: 09127233232
+Account nickname: NA
+Subscriber name: Custom Gcash
+Mobile Number: 09123456748
 Account Type: Gcash
 
 Total amount: 63.00

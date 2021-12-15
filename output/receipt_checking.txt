@@ -1,0 +1,9 @@
+Account nickname : mau checking
+Account Name: Mau Tuazon
+Account Number: 005412345678
+Account Type: Checking
+Bank name: BDO
+
+Total amount: 63.00
+Total amount compact: 63
+Number of Items: 1

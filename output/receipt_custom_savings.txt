@@ -1,0 +1,9 @@
+Account nickname : NA
+Account Name: Custom Savings
+Account Number: 09123343434
+Account Type: Savings
+Bank name: BDO
+
+Total amount: 63.00
+Total amount compact: 63
+Number of Items: 1

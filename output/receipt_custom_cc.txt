@@ -1,0 +1,9 @@
+Account nickname : NA
+Name on Card: Custom CC
+Credit Card number: 34343584543345
+Account Type: Credit Card
+Expiry Date: 08/2024
+
+Total amount: 63.00
+Total amount compact: 63
+Number of Items: 1
