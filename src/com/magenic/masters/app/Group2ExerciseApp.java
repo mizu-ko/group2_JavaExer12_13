@@ -28,21 +28,17 @@ public class Group2ExerciseApp {
 
 	public static void main(String[] args) throws IOException {
 		loadPaymentMethods();
-		printPaymentMethod();
-
-		Scanner scanner = new Scanner(System.in);
-		waitForPaymentMethodInput(scanner);
-
-//		String rawData = Files.readString(Path.of("input/stocks.csv"));
-//		stock = rawData.lines().filter(Predicate.not(String::isBlank)).map(a -> mapToObject(a))
-//				.collect(Collectors.toList());
+//		printPaymentMethod();
+//		waitForPaymentMethodInput(scanner);
 //
-//		categoryMenu(scanner);
-//		scanner.close();
-	}
+		Scanner scanner = new Scanner(System.in);
 
-	private void paymentMethodMenu(Scanner scanner) {
+		String rawData = Files.readString(Path.of("input/stocks.csv"));
+		stock = rawData.lines().filter(Predicate.not(String::isBlank)).map(a -> mapToObject(a))
+				.collect(Collectors.toList());
 
+		categoryMenu(scanner);
+		scanner.close();
 	}
 
 	private static void loadPaymentMethods() {
@@ -52,13 +48,6 @@ public class Group2ExerciseApp {
 		PaymentMethod gcash = new Gcash("John Doe", "09127233232", "mau gcash");
 		paymentMethods.addAll(List.of(savings, checking, cc, gcash));
 
-	}
-
-	private static void printPaymentMethods() {
-		for (PaymentMethod method : paymentMethods) {
-			System.out.print("[" + paymentMethods.indexOf(method) + "]");
-			System.out.println(method.getAccountDetails());
-		}
 	}
 
 	private static void categoryMenu(Scanner scanner) {
@@ -259,56 +248,115 @@ public class Group2ExerciseApp {
 		System.out.print("\nPlease choose payment method:");
 	}
 
-	private static void printCod() {
-		
+	private static PaymentMethod waitForCustomPaymentInput(Scanner scanner) {
+		String paymentMethodMenu = """
+				Payment Method:
+				  1 - Savings
+				  2 - Checking
+				  3 - Credit Card
+				  4 - Gcash
+
+				Please choose payment method:""";
+		System.out.println(paymentMethodMenu);
+		Integer choice = scanner.nextInt();
+		PaymentMethod method = switch (choice) {
+		case 1 -> {
+			scanner = new Scanner(System.in);
+			System.out.print("Account Name: ");
+			String accountName = scanner.nextLine();
+
+			System.out.print("Account Number: ");
+			String accountNumber = String.valueOf(scanner.next());
+			yield new SavingsAccount(accountName, accountNumber);
+		}
+		case 2 -> {
+			scanner = new Scanner(System.in);
+			System.out.print("Account Name: ");
+			String accountName = scanner.nextLine();
+
+			System.out.print("Account Number: ");
+			String accountNumber = String.valueOf(scanner.next());
+			yield new CheckingAccount(accountName, accountNumber);
+		}
+		case 3 -> {
+			scanner = new Scanner(System.in);
+			System.out.print("Name on card:");
+			String nameOnCard = scanner.nextLine();
+			System.out.print("Credit Card Number:");
+			String ccNumber = String.valueOf(scanner.next());
+			System.out.print("Expiry Date:");
+			String expiryDate = String.valueOf(scanner.next());
+			yield new CreditCard(nameOnCard, ccNumber, expiryDate);
+		}
+		case 4 -> {
+			scanner = new Scanner(System.in);
+			System.out.print("Subscriber Name:");
+			String subscriberName = scanner.nextLine();
+			System.out.print("Mobile Number:");
+			String mobileNumber = String.valueOf(scanner.next());
+			System.out.print("Account Type:");
+			yield new Gcash(subscriberName, mobileNumber);
+		}
+		default -> {
+			System.out.println("Please enter valid payment method:");
+			yield waitForCustomPaymentInput(scanner);
+		}
+		};
+		return method;
 	}
+
+	private static String getAccountDetails(PaymentMethod method) {
+		String header = switch (method) {
+		case SavingsAccount sa -> sa.getAccountDetails();
+		case CheckingAccount ca -> ca.getAccountDetails();
+		case CreditCard cc -> cc.getAccountDetails();
+		case Gcash gc -> gc.getAccountDetails();
+		case null -> "N/A";
+		default -> "N/A";
+		};
+		return header;
+	}
+
 	private static void waitForPaymentMethodInput(Scanner scanner) {
 		Integer paymentInt = -1;
+		String header = "default";
 		try {
-			 paymentInt = scanner.nextInt();
+			paymentInt = scanner.nextInt();
 		} catch (Exception e) {
 			System.out.println("Please input valid number");
 			waitForPaymentMethodInput(scanner);
 		}
 		PaymentMethod method = null;
-		if(paymentInt < paymentMethods.size() && paymentInt >= 0) {
+		if (paymentInt < paymentMethods.size() && paymentInt >= 0) {
 			method = paymentMethods.get(paymentInt);
+			header = getAccountDetails(method);
 		} else if (paymentInt == 4) {
 			// TODO: custom and cod
+			header = "COD";
+		} else if (paymentInt == 5) {
+			PaymentMethod custom = waitForCustomPaymentInput(scanner);
+			header = getAccountDetails(custom);
 		} else {
-			
 			System.out.println("Please input valid number");
 			waitForPaymentMethodInput(scanner);
 		}
-		String header = switch(method) {
-			case SavingsAccount sa -> sa.getAccountDetails();
-			case CheckingAccount ca -> ca.getAccountDetails();
-			case CreditCard cc -> cc.getAccountDetails();
-			case Gcash gc -> gc.getAccountDetails();
-			case null -> "N/A";
-			default -> "N/A";
-		};
-		
+
 //		String paymentType = switch (paymentInt) {
 //		case 0 -> ""
 //		case 3 -> "cc";
 //		case 4 -> "gcash";
 //		default -> "N/A";
 //		};
-		if (header.equals("N/A")) {
-			waitForPaymentMethodInput(scanner);
-		} else {
-			String receiptHeader = header;
-			String append = parseTotalCartItems();
-			receiptHeader += "\n"+append;
-			try {
-				// TODO : refactor to different type of receipt.?
-				Files.writeString(Path.of("output/receipt.txt"), receiptHeader, StandardOpenOption.CREATE);
-				System.out.println("Thank you for your payment.");
-				System.out.println(receiptHeader);
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
+		String receiptHeader = header;
+		String append = parseTotalCartItems();
+		receiptHeader += "\n" + append;
+		try {
+			// TODO : refactor to different type of receipt.?
+			Files.writeString(Path.of("output/receipt.txt"), receiptHeader, StandardOpenOption.CREATE);
+			System.out.println("Thank you for your payment.");
+			System.out.println(receiptHeader);
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 	}
 }

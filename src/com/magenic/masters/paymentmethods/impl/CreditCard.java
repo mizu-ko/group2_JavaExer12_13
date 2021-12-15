@@ -25,7 +25,7 @@ public final class CreditCard implements PaymentMethod {
 	public String getAccountDetails() {
 		// TODO Auto-generated method stub
 		String ccDtls = """
-				Account nicknam :\s%s
+				Account nickname :\s%s
 				Name on Card:\s%s
 				Credit Card number:\s%s
 				Account Type: Credit Card
