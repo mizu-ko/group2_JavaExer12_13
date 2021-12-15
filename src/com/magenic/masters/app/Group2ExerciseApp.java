@@ -14,20 +14,51 @@ import java.util.stream.Collectors;
 
 import com.magenic.masters.object.CartItem;
 import com.magenic.masters.object.Stock;
+import com.magenic.masters.paymentmethods.PaymentMethod;
+import com.magenic.masters.paymentmethods.impl.CheckingAccount;
+import com.magenic.masters.paymentmethods.impl.CreditCard;
+import com.magenic.masters.paymentmethods.impl.Gcash;
+import com.magenic.masters.paymentmethods.impl.SavingsAccount;
 
 public class Group2ExerciseApp {
 	private static List<Stock> stock = new ArrayList<>();
 	private static List<CartItem> cartItems = new ArrayList<>();
 
+	private static List<PaymentMethod> paymentMethods = new ArrayList<>();
+
 	public static void main(String[] args) throws IOException {
+		loadPaymentMethods();
+		printPaymentMethod();
 
 		Scanner scanner = new Scanner(System.in);
-		String rawData = Files.readString(Path.of("input/stocks.csv"));
-		stock = rawData.lines().filter(Predicate.not(String::isBlank)).map(a -> mapToObject(a))
-				.collect(Collectors.toList());
+		waitForPaymentMethodInput(scanner);
 
-		categoryMenu(scanner);
-		scanner.close();
+//		String rawData = Files.readString(Path.of("input/stocks.csv"));
+//		stock = rawData.lines().filter(Predicate.not(String::isBlank)).map(a -> mapToObject(a))
+//				.collect(Collectors.toList());
+//
+//		categoryMenu(scanner);
+//		scanner.close();
+	}
+
+	private void paymentMethodMenu(Scanner scanner) {
+
+	}
+
+	private static void loadPaymentMethods() {
+		PaymentMethod savings = new SavingsAccount("Mau Tuazon", "005412345678", "mau savings");
+		PaymentMethod checking = new CheckingAccount("Mau Tuazon", "005412345678", "mau checking");
+		PaymentMethod cc = new CreditCard("Mau Tuazon", "4344548954", "02/2023", "mau credit card");
+		PaymentMethod gcash = new Gcash("John Doe", "09127233232", "mau gcash");
+		paymentMethods.addAll(List.of(savings, checking, cc, gcash));
+
+	}
+
+	private static void printPaymentMethods() {
+		for (PaymentMethod method : paymentMethods) {
+			System.out.print("[" + paymentMethods.indexOf(method) + "]");
+			System.out.println(method.getAccountDetails());
+		}
 	}
 
 	private static void categoryMenu(Scanner scanner) {
@@ -37,7 +68,7 @@ public class Group2ExerciseApp {
 			System.out.println("Thank you.");
 			return;// to stop recursion
 		} else if (category.equals("CHECKOUT")) {
-			if(cartItems.isEmpty()) {
+			if (cartItems.isEmpty()) {
 				System.out.println("Cart is empty, nothing to checkout.\n");
 				categoryMenu(scanner);
 			} else {
@@ -70,7 +101,7 @@ public class Group2ExerciseApp {
 	private static void waitForStockInput(List<Stock> categorizedItems, Scanner scanner, boolean firstTraversal) {
 		Integer n = 0;
 		List<String> stockDisplays = new ArrayList<>();
-		if(firstTraversal) {
+		if (firstTraversal) {
 			for (Stock item : categorizedItems) {
 				item.setIndex(n);
 				n++;
@@ -94,14 +125,21 @@ public class Group2ExerciseApp {
 			waitForStockInput(categorizedItems, scanner, false);
 		} else {
 			Stock selected = categorizedItems.get(stock);
-			switch(selected.getQuantityType()) {
-			case "kg"-> System.out.print("Enter how much (in kg):");
+			switch (selected.getQuantityType()) {
+			case "kg" -> System.out.print("Enter how much (in kg):");
 			default -> System.out.print("Enter how many:");
 			}
-			Double quantity = scanner.nextDouble();
+			Double quantity = 0.0;// scanner.nextDouble();
+			try {
+				quantity = scanner.nextDouble();
+			} catch (Exception e) {
+				System.out.println("Please input valid number");
+				quantity = scanner.nextDouble();
+				waitForPaymentMethodInput(scanner);
+			}
 			Double totalPrice = selected.getPrice() * quantity;
 			String itemAddedDisplay = """
-					Item Added : %s | %.2f / %s x %.1f | %.2f
+					Item Added : %s | %.2f / %s x %.2f | %.2f
 					""";
 
 			System.out.print("\n" + itemAddedDisplay.formatted(selected.getProductName(), selected.getPrice(),
@@ -127,7 +165,7 @@ public class Group2ExerciseApp {
 	}
 
 	private static void printCurrentItems(boolean isCheckout) {
-		if(!isCheckout) {
+		if (!isCheckout) {
 			System.out.println(parseTotalCartItems());
 		}
 		for (CartItem cartItem : cartItems) {
@@ -206,68 +244,63 @@ public class Group2ExerciseApp {
 		printCurrentItems(true);
 		printPaymentMethod();
 		waitForPaymentMethodInput(scanner);
-			
+
 		// TODO : payment method, details, write to file.
 	}
 
 	private static void printPaymentMethod() {
-		String paymentMethods = """
-				Payment Method:
-				  1 - Savings
-				  2 - Checking
-				  3 - Credit Card
-				  4 - Gcash
-
-				Choose Payment Method:""";
-		System.out.print(paymentMethods);
+		System.out.println("Payment Method:");
+		for (PaymentMethod method : paymentMethods) {
+			System.out.print("[" + paymentMethods.indexOf(method) + "]");
+			System.out.println(method.getAccountDetails() + "\n");
+		}
+		System.out.println("[4] COD\n");
+		System.out.println("[5] Pay with other account");
+		System.out.print("\nPlease choose payment method:");
 	}
 
-	private static String getReceiptHeader(Integer input) {
-		String receiptHeader = switch (input) {
-		case 1, 2 -> {
-			yield """
-					Account Name: Mau Tuazon
-					Account Number: 005412345678
-					Bank name: BDO
-					Total amount due:
-					""";
-		}
-		case 3 -> {
-			yield """
-					Name on card: Mau Tuazon
-					Credit card number: 4028123456789012
-					Expiry date: 12/2022
-					Total amount due:
-								""";
-		}
-		case 4 -> {
-			yield """
-					Subscriber name: Mau Tuazon
-					Mobile number: 09171234567
-					Total amount due:
-					""";
-		}
-		default -> {
-			yield "N/A";
-		}
-		};
-		return receiptHeader;
+	private static void printCod() {
+		
 	}
-
 	private static void waitForPaymentMethodInput(Scanner scanner) {
-		Integer paymentInt = scanner.nextInt();
-		String paymentType = switch (paymentInt) {
-		case 1, 2 -> "bank";
-		case 3 -> "cc";
-		case 4 -> "gcash";
-		default -> "N/A";
+		Integer paymentInt = -1;
+		try {
+			 paymentInt = scanner.nextInt();
+		} catch (Exception e) {
+			System.out.println("Please input valid number");
+			waitForPaymentMethodInput(scanner);
+		}
+		PaymentMethod method = null;
+		if(paymentInt < paymentMethods.size() && paymentInt >= 0) {
+			method = paymentMethods.get(paymentInt);
+		} else if (paymentInt == 4) {
+			// TODO: custom and cod
+		} else {
+			
+			System.out.println("Please input valid number");
+			waitForPaymentMethodInput(scanner);
+		}
+		String header = switch(method) {
+			case SavingsAccount sa -> sa.getAccountDetails();
+			case CheckingAccount ca -> ca.getAccountDetails();
+			case CreditCard cc -> cc.getAccountDetails();
+			case Gcash gc -> gc.getAccountDetails();
+			case null -> "N/A";
+			default -> "N/A";
 		};
-		if (paymentType.equals("N/A")) {
+		
+//		String paymentType = switch (paymentInt) {
+//		case 0 -> ""
+//		case 3 -> "cc";
+//		case 4 -> "gcash";
+//		default -> "N/A";
+//		};
+		if (header.equals("N/A")) {
 			waitForPaymentMethodInput(scanner);
 		} else {
-			String receiptHeader = getReceiptHeader(paymentInt);
+			String receiptHeader = header;
 			String append = parseTotalCartItems();
-			receiptHeader += append;
+			receiptHeader += "\n"+append;
 			try {
 				// TODO : refactor to different type of receipt.?
 				Files.writeString(Path.of("output/receipt.txt"), receiptHeader, StandardOpenOption.CREATE);
